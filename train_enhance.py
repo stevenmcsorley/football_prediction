@@ -62,19 +62,26 @@ def engineer_features(df):
 
 df = engineer_features(df)
 
+# Handle NaN values in the target variables
+df = df.dropna(subset=['home_goals', 'away_goals'])
+
 # Prepare features and target
 features = ['home_team_strength', 'away_team_strength', 'home_team_defense', 'away_team_defense',
             'home_xG', 'away_xG', 'xG_difference', 'home_form', 'away_form',
             'h2h_home_win_rate', 'h2h_away_win_rate', 'h2h_draw_rate']
 X = df[features]
-y = df['result']
+y_result = df['result']
+y_home_goals = df['home_goals']
+y_away_goals = df['away_goals']
 
-# Encode the target variable
+# Encode the target variable for result prediction
 le = LabelEncoder()
-y_encoded = le.fit_transform(y)
+y_result_encoded = le.fit_transform(y_result)
 
 # Split the data
-X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
+X_train, X_test, y_result_train, y_result_test = train_test_split(X, y_result_encoded, test_size=0.2, random_state=42)
+_, _, y_home_goals_train, y_home_goals_test = train_test_split(X, y_home_goals, test_size=0.2, random_state=42)
+_, _, y_away_goals_train, y_away_goals_test = train_test_split(X, y_away_goals, test_size=0.2, random_state=42)
 
 # Create a pipeline with imputer, scaler, feature selection, and model
 def create_pipeline(model):
@@ -128,28 +135,28 @@ best_models = {}
 for name, (pipeline, params) in models.items():
     print(f"Tuning {name}...")
     random_search = RandomizedSearchCV(pipeline, params, n_iter=50, cv=5, n_jobs=-1, verbose=1, random_state=42)
-    random_search.fit(X_train, y_train)
+    random_search.fit(X_train, y_result_train)
     best_models[name] = random_search.best_estimator_
     print(f"Best parameters for {name}: {random_search.best_params_}")
     print(f"Best score for {name}: {random_search.best_score_}")
 
-# Create ensemble model
+# Create ensemble model for result prediction
 ensemble = VotingClassifier(
     estimators=[(name, model) for name, model in best_models.items()],
     voting='soft'
 )
 
-# Train and evaluate the ensemble model
-ensemble.fit(X_train, y_train)
-y_pred = ensemble.predict(X_test)
-accuracy = accuracy_score(y_test, y_pred)
+# Train and evaluate the ensemble model for result prediction
+ensemble.fit(X_train, y_result_train)
+y_result_pred = ensemble.predict(X_test)
+result_accuracy = accuracy_score(y_result_test, y_result_pred)
 print("\nEnsemble Model Results:")
-print(f"Accuracy: {accuracy:.4f}")
+print(f"Accuracy: {result_accuracy:.4f}")
 print("Classification Report:")
-print(classification_report(y_test, y_pred, target_names=le.classes_))
+print(classification_report(y_result_test, y_result_pred, target_names=le.classes_))
 
 # Confusion Matrix
-cm = confusion_matrix(y_test, y_pred)
+cm = confusion_matrix(y_result_test, y_result_pred)
 plt.figure(figsize=(10, 8))
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=le.classes_, yticklabels=le.classes_)
 plt.title('Confusion Matrix')
@@ -158,78 +165,27 @@ plt.ylabel('Actual')
 plt.savefig('confusion_matrix.png')
 plt.close()
 
-# Save the ensemble model and label encoder
+# Train models for score prediction
+score_models = {
+    'home_goals': RandomForestClassifier(n_estimators=100, random_state=42),
+    'away_goals': RandomForestClassifier(n_estimators=100, random_state=42)
+}
+
+score_models['home_goals'].fit(X_train, y_home_goals_train)
+score_models['away_goals'].fit(X_train, y_away_goals_train)
+
+# Evaluate score prediction models
+y_home_goals_pred = score_models['home_goals'].predict(X_test)
+y_away_goals_pred = score_models['away_goals'].predict(X_test)
+home_goals_mae = np.mean(np.abs(y_home_goals_test - y_home_goals_pred))
+away_goals_mae = np.mean(np.abs(y_away_goals_test - y_away_goals_pred))
+print(f"\nHome Goals Prediction MAE: {home_goals_mae:.4f}")
+print(f"Away Goals Prediction MAE: {away_goals_mae:.4f}")
+
+# Save the ensemble model, label encoder, and score models
 joblib.dump(ensemble, 'football_prediction_ensemble.joblib')
 joblib.dump(le, 'label_encoder.joblib')
+joblib.dump(score_models['home_goals'], 'home_goals_model.joblib')
+joblib.dump(score_models['away_goals'], 'away_goals_model.joblib')
 
-print("\nEnsemble model and label encoder saved.")
-
-# Optional: If you want to save individual models as well
-for name, model in best_models.items():
-    joblib.dump(model, f'football_prediction_{name.lower()}.joblib')
-    print(f"{name} model saved.")
-
-# Feature importance analysis
-rf_model = best_models['RandomForest']
-feature_selector = rf_model.named_steps['feature_selection']
-selected_feature_indices = feature_selector.get_support(indices=True)
-selected_features = [features[i] for i in selected_feature_indices]
-
-feature_importance = pd.DataFrame({
-    'feature': selected_features,
-    'importance': rf_model.named_steps['model'].feature_importances_
-}).sort_values('importance', ascending=False)
-
-print("\nFeature Importance:")
-print(feature_importance)
-
-# Plot feature importance
-plt.figure(figsize=(10, 6))
-feature_importance.plot(x='feature', y='importance', kind='bar')
-plt.title('Feature Importance')
-plt.xlabel('Features')
-plt.ylabel('Importance')
-plt.tight_layout()
-plt.savefig('feature_importance.png')
-plt.close()
-
-print("\nFeature importance plot saved as 'feature_importance.png'")
-
-# Learning curves
-from sklearn.model_selection import learning_curve
-
-def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
-                        n_jobs=None, train_sizes=np.linspace(.1, 1.0, 5)):
-    plt.figure()
-    plt.title(title)
-    if ylim is not None:
-        plt.ylim(*ylim)
-    plt.xlabel("Training examples")
-    plt.ylabel("Score")
-    train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=cv, n_jobs=n_jobs, train_sizes=train_sizes)
-    train_scores_mean = np.mean(train_scores, axis=1)
-    train_scores_std = np.std(train_scores, axis=1)
-    test_scores_mean = np.mean(test_scores, axis=1)
-    test_scores_std = np.std(test_scores, axis=1)
-    plt.grid()
-
-    plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
-                     train_scores_mean + train_scores_std, alpha=0.1,
-                     color="r")
-    plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
-                     test_scores_mean + test_scores_std, alpha=0.1, color="g")
-    plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
-             label="Training score")
-    plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
-             label="Cross-validation score")
-
-    plt.legend(loc="best")
-    return plt
-
-# Plot learning curve for the ensemble model
-plot_learning_curve(ensemble, "Learning Curve for Ensemble Model", X, y_encoded, ylim=(0.1, 1.01), cv=5, n_jobs=-1)
-plt.savefig('learning_curve.png')
-plt.close()
-
-print("\nLearning curve plot saved as 'learning_curve.png'")
+print("\nEnsemble model, label encoder, and score prediction models saved.")

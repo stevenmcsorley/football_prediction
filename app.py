@@ -4,14 +4,14 @@ import pandas as pd
 import numpy as np
 from functools import lru_cache
 from datetime import datetime
-import random  # Add this import
 
 app = Flask(__name__)
 
-# Load the trained ensemble model and label encoder
+# Load the trained ensemble model, label encoder, and score prediction models
 ensemble_model = joblib.load('football_prediction_ensemble.joblib')
 le = joblib.load('label_encoder.joblib')
-
+home_goals_model = joblib.load('home_goals_model.joblib')
+away_goals_model = joblib.load('away_goals_model.joblib')
 
 # Load team strength data and other necessary data
 df = pd.read_csv('football_match_data.csv')
@@ -44,10 +44,7 @@ def get_h2h_history(home_team, away_team, n=5):
     matches = df[(df['home_team'] == home_team) & (df['away_team'] == away_team) |
                  (df['home_team'] == away_team) & (df['away_team'] == home_team)]
     
-    # Sort by date and remove duplicates
     matches = matches.sort_values('date', ascending=False).drop_duplicates(subset=['date', 'home_team', 'away_team'])
-    
-    # Take the most recent n matches
     matches = matches.head(n)
     
     history = []
@@ -104,28 +101,6 @@ def get_team_last_matches(team, n=5):
             })
     return history
 
-def estimate_score(prediction, probabilities):
-    if prediction == 'home_win':
-        home_score = random.randint(1, 3)
-        away_score = random.randint(0, home_score - 1)
-    elif prediction == 'away_win':
-        away_score = random.randint(1, 3)
-        home_score = random.randint(0, away_score - 1)
-    else:  # draw
-        home_score = away_score = random.randint(0, 2)
-    
-    # Adjust scores based on probabilities
-    if probabilities[prediction] > 0.7:  # High confidence
-        if prediction != 'draw':
-            winning_score = max(home_score, away_score)
-            winning_score += random.randint(0, 2)
-            if prediction == 'home_win':
-                home_score = winning_score
-            else:
-                away_score = winning_score
-    
-    return f"{home_score}-{away_score}"
-
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -146,27 +121,23 @@ def predict():
         home_team_defense = home_defense.get(home_team, np.mean(list(home_defense.values())))
         away_team_defense = away_defense.get(away_team, np.mean(list(away_defense.values())))
         
-        # Use average xG values
         avg_home_xG = df[df['home_team'] == home_team]['home_xG'].mean()
         avg_away_xG = df[df['away_team'] == away_team]['away_xG'].mean()
         
         xG_difference = avg_home_xG - avg_away_xG
         
-        # Get head-to-head stats
         h2h = h2h_stats.get((home_team, away_team), {
             'h2h_home_win_rate': 0.5,
             'h2h_away_win_rate': 0.5,
             'h2h_draw_rate': 0.5
         })
         
-        # Calculate form
         home_matches = df[df['home_team'] == home_team].tail(5)
         away_matches = df[df['away_team'] == away_team].tail(5)
         
         home_form = (home_matches['home_goals'] - home_matches['away_goals']).mean()
         away_form = (away_matches['away_goals'] - away_matches['home_goals']).mean()
         
-        # Prepare the input data
         input_data = pd.DataFrame({
             'home_team_strength': [home_team_strength],
             'away_team_strength': [away_team_strength],
@@ -182,20 +153,19 @@ def predict():
             'h2h_draw_rate': [h2h['h2h_draw_rate']]
         })
         
-        # Make prediction
         prediction_encoded = ensemble_model.predict(input_data)
         prediction = le.inverse_transform(prediction_encoded)[0]
         
         probabilities = ensemble_model.predict_proba(input_data)[0]
         probability_dict = {le.classes_[i]: float(prob) * 100 for i, prob in enumerate(probabilities)}
 
-         # Estimate score
-        estimated_score = estimate_score(prediction, {k: v/100 for k, v in probability_dict.items()})
+        # Predict scores
+        home_goals_pred = home_goals_model.predict(input_data)[0]
+        away_goals_pred = away_goals_model.predict(input_data)[0]
 
-        # Get head-to-head history
+        estimated_score = f"{home_goals_pred}-{away_goals_pred}"
+
         h2h_history = get_h2h_history(home_team, away_team)
-        
-        # Get last 5 matches for each team
         home_team_last_matches = get_team_last_matches(home_team)
         away_team_last_matches = get_team_last_matches(away_team)
         
