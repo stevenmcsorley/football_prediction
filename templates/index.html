@@ -32,7 +32,7 @@
   </head>
   <body class="bg-gray-100 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
     <div
-      class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl"
+      class="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden"
     >
       <div class="p-8 w-full">
         <h1 class="text-2xl font-bold text-indigo-600 mb-6">
@@ -94,9 +94,122 @@
           </div>
           <div id="probabilityText" class="mt-4 text-sm text-gray-600"></div>
         </div>
+        <div id="h2h-history" class="mt-8 hidden">
+          <h3 class="text-lg font-medium text-gray-900">
+            Head-to-Head History:
+          </h3>
+          <div class="mt-2 overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Date
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Home Team
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Away Team
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Score
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Result
+                  </th>
+                </tr>
+              </thead>
+              <tbody
+                class="bg-white divide-y divide-gray-200"
+                id="h2h-history-body"
+              ></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="team-histories" class="mt-8 hidden">
+          <div id="home-team-history" class="mb-4">
+            <h3 class="text-lg font-medium text-gray-900">
+              Home Team Last 5 Matches:
+            </h3>
+            <table class="min-w-full divide-y divide-gray-200 mt-2">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Date
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Opponent
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Score
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Result
+                  </th>
+                </tr>
+              </thead>
+              <tbody
+                class="bg-white divide-y divide-gray-200"
+                id="home-team-history-body"
+              ></tbody>
+            </table>
+          </div>
+          <div id="away-team-history">
+            <h3 class="text-lg font-medium text-gray-900">
+              Away Team Last 5 Matches:
+            </h3>
+            <table class="min-w-full divide-y divide-gray-200 mt-2">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Date
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Opponent
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Score
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Result
+                  </th>
+                </tr>
+              </thead>
+              <tbody
+                class="bg-white divide-y divide-gray-200"
+                id="away-team-history-body"
+              ></tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
-
     <script>
       let teams = [];
       let probabilityChart;
@@ -163,6 +276,8 @@
 
           document.getElementById("loading").classList.remove("hidden");
           document.getElementById("result").classList.add("hidden");
+          document.getElementById("h2h-history").classList.add("hidden");
+          document.getElementById("team-histories").classList.add("hidden");
 
           try {
             const response = await fetch("/predict", {
@@ -247,13 +362,77 @@
               },
             });
 
-            // In your frontend JavaScript (likely in index.html)
             const probabilityText = document.getElementById("probabilityText");
             probabilityText.innerHTML = Object.entries(result.probabilities)
               .map(([outcome, prob]) => `${outcome}: ${prob.toFixed(2)}%`)
               .join("<br>");
 
             document.getElementById("result").classList.remove("hidden");
+
+            // Handle head-to-head history
+            if (result.h2h_history && result.h2h_history.length > 0) {
+              const historyBody = document.getElementById("h2h-history-body");
+              historyBody.innerHTML = "";
+              result.h2h_history.forEach((match) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                          <td class="px-6 py-4 whitespace-nowrap">${match.date}</td>
+                          <td class="px-6 py-4 whitespace-nowrap">${match.home_team}</td>
+                          <td class="px-6 py-4 whitespace-nowrap">${match.away_team}</td>
+                          <td class="px-6 py-4 whitespace-nowrap">${match.score}</td>
+                          <td class="px-6 py-4 whitespace-nowrap">${match.result}</td>
+                      `;
+                historyBody.appendChild(row);
+              });
+              document.getElementById("h2h-history").classList.remove("hidden");
+            } else {
+              document.getElementById("h2h-history").classList.add("hidden");
+            }
+
+            // Handle team histories
+            if (
+              result.home_team_last_matches &&
+              result.home_team_last_matches.length > 0
+            ) {
+              const homeHistoryBody = document.getElementById(
+                "home-team-history-body"
+              );
+              homeHistoryBody.innerHTML = "";
+              result.home_team_last_matches.forEach((match) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                          <td class="px-6 py-4 whitespace-nowrap">${match.date}</td>
+                          <td class="px-6 py-4 whitespace-nowrap">${match.opponent}</td>
+                          <td class="px-6 py-4 whitespace-nowrap">${match.score}</td>
+                          <td class="px-6 py-4 whitespace-nowrap">${match.result}</td>
+                      `;
+                homeHistoryBody.appendChild(row);
+              });
+            }
+
+            if (
+              result.away_team_last_matches &&
+              result.away_team_last_matches.length > 0
+            ) {
+              const awayHistoryBody = document.getElementById(
+                "away-team-history-body"
+              );
+              awayHistoryBody.innerHTML = "";
+              result.away_team_last_matches.forEach((match) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                          <td class="px-6 py-4 whitespace-nowrap">${match.date}</td>
+                          <td class="px-6 py-4 whitespace-nowrap">${match.opponent}</td>
+                          <td class="px-6 py-4 whitespace-nowrap">${match.score}</td>
+                          <td class="px-6 py-4 whitespace-nowrap">${match.result}</td>
+                      `;
+                awayHistoryBody.appendChild(row);
+              });
+            }
+
+            document
+              .getElementById("team-histories")
+              .classList.remove("hidden");
           } catch (error) {
             alert(`Error: ${error.message}`);
           } finally {

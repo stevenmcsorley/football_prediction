@@ -3,6 +3,7 @@ import joblib
 import pandas as pd
 import numpy as np
 from functools import lru_cache
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -37,11 +38,74 @@ def get_h2h_stats():
         }
     return df.groupby(['home_team', 'away_team']).apply(calculate_h2h).to_dict()
 
+def get_h2h_history(home_team, away_team, n=5):
+    matches = df[(df['home_team'] == home_team) & (df['away_team'] == away_team) |
+                 (df['home_team'] == away_team) & (df['away_team'] == home_team)]
+    
+    # Sort by date and remove duplicates
+    matches = matches.sort_values('date', ascending=False).drop_duplicates(subset=['date', 'home_team', 'away_team'])
+    
+    # Take the most recent n matches
+    matches = matches.head(n)
+    
+    history = []
+    for _, match in matches.iterrows():
+        date_obj = datetime.strptime(match['date'], '%Y-%m-%d')
+        formatted_date = date_obj.strftime('%d %b %Y')
+        
+        if match['home_team'] == home_team:
+            result = 'home_win' if match['home_goals'] > match['away_goals'] else 'away_win' if match['home_goals'] < match['away_goals'] else 'draw'
+            history.append({
+                'date': formatted_date,
+                'home_team': match['home_team'],
+                'away_team': match['away_team'],
+                'score': f"{match['home_goals']}-{match['away_goals']}",
+                'result': result
+            })
+        else:
+            result = 'away_win' if match['home_goals'] > match['away_goals'] else 'home_win' if match['home_goals'] < match['away_goals'] else 'draw'
+            history.append({
+                'date': formatted_date,
+                'home_team': match['away_team'],
+                'away_team': match['home_team'],
+                'score': f"{match['away_goals']}-{match['home_goals']}",
+                'result': result
+            })
+    return history
+
+def get_team_last_matches(team, n=5):
+    home_matches = df[df['home_team'] == team].sort_values('date', ascending=False).head(n)
+    away_matches = df[df['away_team'] == team].sort_values('date', ascending=False).head(n)
+    
+    all_matches = pd.concat([home_matches, away_matches]).sort_values('date', ascending=False).head(n)
+    
+    history = []
+    for _, match in all_matches.iterrows():
+        date_obj = datetime.strptime(match['date'], '%Y-%m-%d')
+        formatted_date = date_obj.strftime('%d %b %Y')
+        
+        if match['home_team'] == team:
+            result = 'win' if match['home_goals'] > match['away_goals'] else 'loss' if match['home_goals'] < match['away_goals'] else 'draw'
+            history.append({
+                'date': formatted_date,
+                'opponent': match['away_team'],
+                'score': f"{match['home_goals']}-{match['away_goals']}",
+                'result': result
+            })
+        else:
+            result = 'win' if match['away_goals'] > match['home_goals'] else 'loss' if match['away_goals'] < match['home_goals'] else 'draw'
+            history.append({
+                'date': formatted_date,
+                'opponent': match['home_team'],
+                'score': f"{match['away_goals']}-{match['home_goals']}",
+                'result': result
+            })
+    return history
+
 @app.route('/')
 def home():
     return render_template('index.html')
 
-# In the predict route
 @app.route('/predict', methods=['POST'])
 def predict():
     data = request.json
@@ -100,10 +164,20 @@ def predict():
         
         probabilities = ensemble_model.predict_proba(input_data)[0]
         probability_dict = {le.classes_[i]: float(prob) * 100 for i, prob in enumerate(probabilities)}
+
+        # Get head-to-head history
+        h2h_history = get_h2h_history(home_team, away_team)
+        
+        # Get last 5 matches for each team
+        home_team_last_matches = get_team_last_matches(home_team)
+        away_team_last_matches = get_team_last_matches(away_team)
         
         return jsonify({
             'prediction': prediction,
-            'probabilities': probability_dict
+            'probabilities': probability_dict,
+            'h2h_history': h2h_history,
+            'home_team_last_matches': home_team_last_matches,
+            'away_team_last_matches': away_team_last_matches
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 400
