@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Understanding xG in Football Predictions</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      h1,
+      h2 {
+        color: #2c3e50;
+      }
+      ul {
+        padding-left: 20px;
+      }
+      code {
+        background-color: #f4f4f4;
+        padding: 2px 4px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Understanding xG (Expected Goals) in Football Predictions</h1>
+
+    <h2>What is xG?</h2>
+    <p>
+      xG, or Expected Goals, is a statistical measure in football that
+      represents the quality of scoring chances created by a team in a match.
+      It's based on historical data of similar chances and how often they
+      resulted in goals.
+    </p>
+
+    <h2>Simple explanation:</h2>
+    <p>
+      Imagine if every shot in football had a "difficulty rating" from 0 to 1:
+    </p>
+    <ul>
+      <li>0 means it's impossible to score</li>
+      <li>1 means it's a certain goal</li>
+    </ul>
+    <p>
+      xG is the sum of these "difficulty ratings" for all shots a team takes in
+      a match.
+    </p>
+
+    <h2>Examples:</h2>
+    <ol>
+      <li>A penalty kick might have an xG of 0.76 (76% chance of scoring)</li>
+      <li>
+        A shot from the halfway line might have an xG of 0.01 (1% chance of
+        scoring)
+      </li>
+      <li>
+        A tap-in from 1 yard out might have an xG of 0.96 (96% chance of
+        scoring)
+      </li>
+    </ol>
+    <p>
+      If a team takes these three shots in a match, their total xG would be:<br />
+      <code>0.76 + 0.01 + 0.96 = 1.73</code>
+    </p>
+    <p>
+      This means, based on their chances, they would be expected to score about
+      1.73 goals on average.
+    </p>
+
+    <h2>Why use xG in predictions?</h2>
+    <ol>
+      <li>It's more accurate than just looking at goals scored</li>
+      <li>It accounts for the quality of chances, not just the quantity</li>
+      <li>
+        It can indicate if a team is performing better or worse than their
+        actual goal tally suggests
+      </li>
+    </ol>
+
+    <h2>How to use xG in our prediction model:</h2>
+    <ol>
+      <li>Look up recent xG statistics for both teams</li>
+      <li>Input these values into our prediction form</li>
+      <li>
+        The model uses this information, along with other factors, to predict
+        the match outcome
+      </li>
+    </ol>
+
+    <h2>Where to find xG data:</h2>
+    <ul>
+      <li>
+        Websites like Understat, FBref, or WhoScored often provide xG data for
+        matches
+      </li>
+      <li>
+        You can calculate an average xG for recent matches if you don't have
+        data for a specific upcoming match
+      </li>
+    </ul>
+
+    <p>
+      <em
+        >Remember, xG is just one factor in predicting match outcomes, but it's
+        a valuable one that gives insight into team performance beyond just
+        goals scored.</em
+      >
+    </p>
+  </body>
+</html>

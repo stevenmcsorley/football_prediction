@@ -1,0 +1,8 @@
+# Exclude joblib model files
+football_prediction_ensemble.joblib
+football_prediction_gradientboosting.joblib
+football_prediction_model.joblib
+football_prediction_randomforest.joblib
+football_prediction_svc.joblib
+football_prediction_xgboost.joblib
+label_encoder.joblib

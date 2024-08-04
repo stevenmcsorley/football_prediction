@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Football Match Prediction</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 p-8">
+    <div
+      class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl"
+    >
+      <div class="p-8">
+        <div
+          class="uppercase tracking-wide text-sm text-indigo-500 font-semibold mb-4"
+        >
+          Football Match Prediction
+        </div>
+        <button
+          id="open-modal"
+          class="text-sm text-blue-500 hover:text-blue-700 underline"
+        >
+          Learn more about xG and how to use this tool
+        </button>
+        <div class="mb-6 text-sm text-gray-700">
+          <p class="mb-2">
+            This tool predicts football match outcomes using Expected Goals (xG)
+            and team data.
+          </p>
+          <p class="mb-2">
+            <strong>xG</strong> measures the quality of scoring chances. A
+            higher xG means better chances created.
+          </p>
+          <p>
+            Input the teams and their expected xG (typically 0.5-2.5) to get a
+            prediction.
+          </p>
+        </div>
+
+        <form id="prediction-form" class="mt-4">
+          <div class="mb-4">
+            <label
+              for="home-team"
+              class="block text-gray-700 text-sm font-bold mb-2"
+              >Home Team</label
+            >
+            <select
+              id="home-team"
+              name="home-team"
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              required
+            >
+              <option value="">Select Home Team</option>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label
+              for="away-team"
+              class="block text-gray-700 text-sm font-bold mb-2"
+              >Away Team</label
+            >
+            <select
+              id="away-team"
+              name="away-team"
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              required
+            >
+              <option value="">Select Away Team</option>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label
+              for="home-xg"
+              class="block text-gray-700 text-sm font-bold mb-2"
+              >Home Team xG</label
+            >
+            <input
+              type="number"
+              step="0.1"
+              id="home-xg"
+              name="home-xg"
+              min="0"
+              max="5"
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              required
+            />
+            <p class="text-sm text-gray-600 mt-1">
+              Typical range: 0.5 (low) to 2.5+ (exceptional)
+            </p>
+          </div>
+          <div class="mb-4">
+            <label
+              for="away-xg"
+              class="block text-gray-700 text-sm font-bold mb-2"
+              >Away Team xG</label
+            >
+            <input
+              type="number"
+              step="0.1"
+              id="away-xg"
+              name="away-xg"
+              min="0"
+              max="5"
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              required
+            />
+            <p class="text-sm text-gray-600 mt-1">
+              Typical range: 0.5 (low) to 2.5+ (exceptional)
+            </p>
+          </div>
+          <div class="flex items-center justify-between">
+            <button
+              type="submit"
+              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            >
+              Predict
+            </button>
+          </div>
+        </form>
+        <div id="result" class="mt-4 hidden">
+          <h2 class="text-lg font-semibold">Prediction Result:</h2>
+          <p id="prediction" class="mt-2"></p>
+          <p id="probabilities" class="mt-2"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div
+      id="xg-modal"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden"
+    >
+      <div
+        class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white"
+      >
+        <div class="mt-3">
+            <h1 class="text-2xl font-bold text-gray-800 mb-4">Understanding xG (Expected Goals) in Football Predictions</h1>
+
+            <h2 class="text-xl font-semibold text-gray-700 mt-6 mb-2">What is xG?</h2>
+            <p class="text-gray-600 mb-4">
+                xG, or Expected Goals, is a statistical measure in football that
+                represents the quality of scoring chances created by a team in a match.
+                It's based on historical data of similar chances and how often they
+                resulted in goals.
+            </p>
+        
+            <h2 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Simple explanation:</h2>
+            <p class="text-gray-600 mb-2">
+                Imagine if every shot in football had a "difficulty rating" from 0 to 1:
+            </p>
+            <ul class="list-disc pl-5 mb-4 text-gray-600">
+                <li>0 means it's impossible to score</li>
+                <li>1 means it's a certain goal</li>
+            </ul>
+            <p class="text-gray-600 mb-4">
+                xG is the sum of these "difficulty ratings" for all shots a team takes in
+                a match.
+            </p>
+        
+            <h2 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Examples:</h2>
+            <ol class="list-decimal pl-5 mb-4 text-gray-600">
+                <li>A penalty kick might have an xG of 0.76 (76% chance of scoring)</li>
+                <li>A shot from the halfway line might have an xG of 0.01 (1% chance of scoring)</li>
+                <li>A tap-in from 1 yard out might have an xG of 0.96 (96% chance of scoring)</li>
+            </ol>
+            <p class="text-gray-600 mb-2">
+                If a team takes these three shots in a match, their total xG would be:
+            </p>
+            <code class="bg-gray-100 px-2 py-1 rounded text-sm text-gray-800">0.76 + 0.01 + 0.96 = 1.73</code>
+            <p class="text-gray-600 mt-2 mb-4">
+                This means, based on their chances, they would be expected to score about
+                1.73 goals on average.
+            </p>
+        
+            <h2 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Why use xG in predictions?</h2>
+            <ol class="list-decimal pl-5 mb-4 text-gray-600">
+                <li>It's more accurate than just looking at goals scored</li>
+                <li>It accounts for the quality of chances, not just the quantity</li>
+                <li>It can indicate if a team is performing better or worse than their actual goal tally suggests</li>
+            </ol>
+        
+            <h2 class="text-xl font-semibold text-gray-700 mt-6 mb-2">How to use xG in our prediction model:</h2>
+            <ol class="list-decimal pl-5 mb-4 text-gray-600">
+                <li>Look up recent xG statistics for both teams</li>
+                <li>Input these values into our prediction form</li>
+                <li>The model uses this information, along with other factors, to predict the match outcome</li>
+            </ol>
+        
+            <h2 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Where to find xG data:</h2>
+            <ul class="list-disc pl-5 mb-4 text-gray-600">
+                <li>Websites like Understat, FBref, or WhoScored often provide xG data for matches</li>
+                <li>You can calculate an average xG for recent matches if you don't have data for a specific upcoming match</li>
+            </ul>
+        
+            <p class="text-gray-600 italic mt-6">
+                Remember, xG is just one factor in predicting match outcomes, but it's
+                a valuable one that gives insight into team performance beyond just
+                goals scored.
+            </p>
+          </div>
+          <div class="items-center px-4 py-3">
+            <button
+              id="close-modal"
+              class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Fetch teams and populate dropdowns
+      fetch("/teams")
+        .then((response) => response.json())
+        .then((teams) => {
+          const homeSelect = document.getElementById("home-team");
+          const awaySelect = document.getElementById("away-team");
+          teams.forEach((team) => {
+            homeSelect.innerHTML += `<option value="${team}">${team}</option>`;
+            awaySelect.innerHTML += `<option value="${team}">${team}</option>`;
+          });
+        });
+
+      document
+        .getElementById("prediction-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const homeTeam = document.getElementById("home-team").value;
+          const awayTeam = document.getElementById("away-team").value;
+          const homeXG = parseFloat(document.getElementById("home-xg").value);
+          const awayXG = parseFloat(document.getElementById("away-xg").value);
+
+          const response = await fetch("/predict", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              home_team: homeTeam,
+              away_team: awayTeam,
+              home_xG: homeXG,
+              away_xG: awayXG,
+            }),
+          });
+
+          const result = await response.json();
+
+          document.getElementById(
+            "prediction"
+          ).textContent = `Predicted outcome: ${result.prediction}`;
+
+          const probabilitiesText = Object.entries(result.probabilities)
+            .map(
+              ([outcome, probability]) =>
+                `${outcome} (${(probability * 100).toFixed(2)}%)`
+            )
+            .join(", ");
+
+          document.getElementById(
+            "probabilities"
+          ).textContent = `Probabilities: ${probabilitiesText}`;
+          document.getElementById("result").classList.remove("hidden");
+        });
+
+      // Modal functionality
+      const modal = document.getElementById("xg-modal");
+      const openModalBtn = document.getElementById("open-modal");
+      const closeModalBtn = document.getElementById("close-modal");
+
+      openModalBtn.onclick = function () {
+        modal.classList.remove("hidden");
+      };
+
+      closeModalBtn.onclick = function () {
+        modal.classList.add("hidden");
+      };
+
+      window.onclick = function (event) {
+        if (event.target == modal) {
+          modal.classList.add("hidden");
+        }
+      };
+    </script>
+  </body>
+</html>
