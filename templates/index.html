@@ -383,12 +383,12 @@
               result.h2h_history.forEach((match) => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                          <td class="px-6 py-4 whitespace-nowrap">${match.date}</td>
-                          <td class="px-6 py-4 whitespace-nowrap">${match.home_team}</td>
-                          <td class="px-6 py-4 whitespace-nowrap">${match.away_team}</td>
-                          <td class="px-6 py-4 whitespace-nowrap">${match.score}</td>
-                          <td class="px-6 py-4 whitespace-nowrap">${match.result}</td>
-                      `;
+                    <td class="px-6 py-4 whitespace-nowrap">${match.date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${match.home_team}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${match.away_team}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${match.score}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${match.result}</td>
+                `;
                 historyBody.appendChild(row);
               });
               document.getElementById("h2h-history").classList.remove("hidden");
@@ -396,45 +396,47 @@
               document.getElementById("h2h-history").classList.add("hidden");
             }
 
-            // Handle team histories
+            // Function to handle team histories
+            function handleTeamHistory(matches, containerId) {
+              const historyBody = document.getElementById(containerId);
+              historyBody.innerHTML = "";
+              const uniqueMatches = new Set();
+              matches.forEach((match) => {
+                const matchKey = `${match.date}-${match.opponent}`;
+                if (!uniqueMatches.has(matchKey)) {
+                  uniqueMatches.add(matchKey);
+                  const row = document.createElement("tr");
+                  row.innerHTML = `
+                      <td class="px-6 py-4 whitespace-nowrap">${match.date}</td>
+                      <td class="px-6 py-4 whitespace-nowrap">${match.opponent}</td>
+                      <td class="px-6 py-4 whitespace-nowrap">${match.score}</td>
+                      <td class="px-6 py-4 whitespace-nowrap">${match.result}</td>
+                  `;
+                  historyBody.appendChild(row);
+                }
+              });
+            }
+
+            // Handle home team last matches
             if (
               result.home_team_last_matches &&
               result.home_team_last_matches.length > 0
             ) {
-              const homeHistoryBody = document.getElementById(
+              handleTeamHistory(
+                result.home_team_last_matches,
                 "home-team-history-body"
               );
-              homeHistoryBody.innerHTML = "";
-              result.home_team_last_matches.forEach((match) => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                          <td class="px-6 py-4 whitespace-nowrap">${match.date}</td>
-                          <td class="px-6 py-4 whitespace-nowrap">${match.opponent}</td>
-                          <td class="px-6 py-4 whitespace-nowrap">${match.score}</td>
-                          <td class="px-6 py-4 whitespace-nowrap">${match.result}</td>
-                      `;
-                homeHistoryBody.appendChild(row);
-              });
             }
 
+            // Handle away team last matches
             if (
               result.away_team_last_matches &&
               result.away_team_last_matches.length > 0
             ) {
-              const awayHistoryBody = document.getElementById(
+              handleTeamHistory(
+                result.away_team_last_matches,
                 "away-team-history-body"
               );
-              awayHistoryBody.innerHTML = "";
-              result.away_team_last_matches.forEach((match) => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                          <td class="px-6 py-4 whitespace-nowrap">${match.date}</td>
-                          <td class="px-6 py-4 whitespace-nowrap">${match.opponent}</td>
-                          <td class="px-6 py-4 whitespace-nowrap">${match.score}</td>
-                          <td class="px-6 py-4 whitespace-nowrap">${match.result}</td>
-                      `;
-                awayHistoryBody.appendChild(row);
-              });
             }
 
             document
