@@ -15,14 +15,17 @@ away_goals_model = joblib.load('away_goals_model.joblib')
 
 # Load team strength data and other necessary data
 df = pd.read_csv('football_match_data.csv')
+df['date'] = pd.to_datetime(df['date'])
+df = df.sort_values('date')
 
 # Calculate team strengths and defenses
 @lru_cache(maxsize=None)
 def get_team_stats():
-    home_strength = df.groupby('home_team')['home_goals'].mean().to_dict()
-    away_strength = df.groupby('away_team')['away_goals'].mean().to_dict()
-    home_defense = df.groupby('home_team')['away_goals'].mean().to_dict()
-    away_defense = df.groupby('away_team')['home_goals'].mean().to_dict()
+    window = 10
+    home_strength = df.groupby('home_team')['home_goals'].transform(lambda x: x.rolling(window, min_periods=1).mean()).to_dict()
+    away_strength = df.groupby('away_team')['away_goals'].transform(lambda x: x.rolling(window, min_periods=1).mean()).to_dict()
+    home_defense = df.groupby('home_team')['away_goals'].transform(lambda x: x.rolling(window, min_periods=1).mean()).to_dict()
+    away_defense = df.groupby('away_team')['home_goals'].transform(lambda x: x.rolling(window, min_periods=1).mean()).to_dict()
     return home_strength, away_strength, home_defense, away_defense
 
 # Calculate head-to-head statistics
@@ -49,7 +52,7 @@ def get_h2h_history(home_team, away_team, n=5):
     
     history = []
     for _, match in matches.iterrows():
-        date_obj = datetime.strptime(match['date'], '%Y-%m-%d')
+        date_obj = match['date']
         formatted_date = date_obj.strftime('%d %b %Y')
         
         if match['home_team'] == home_team:
@@ -80,7 +83,7 @@ def get_team_last_matches(team, n=5):
     
     history = []
     for _, match in all_matches.iterrows():
-        date_obj = datetime.strptime(match['date'], '%Y-%m-%d')
+        date_obj = match['date']
         formatted_date = date_obj.strftime('%d %b %Y')
         
         if match['home_team'] == team:
@@ -138,6 +141,13 @@ def predict():
         home_form = (home_matches['home_goals'] - home_matches['away_goals']).mean()
         away_form = (away_matches['away_goals'] - away_matches['home_goals']).mean()
         
+        # New features
+        goal_ratio = home_team_strength / (away_team_strength + 1e-5)
+        xG_ratio = avg_home_xG / (avg_away_xG + 1e-5)
+        current_date = datetime.now()
+        day_of_week = current_date.weekday()
+        month = current_date.month
+        
         input_data = pd.DataFrame({
             'home_team_strength': [home_team_strength],
             'away_team_strength': [away_team_strength],
@@ -150,7 +160,11 @@ def predict():
             'away_form': [away_form],
             'h2h_home_win_rate': [h2h['h2h_home_win_rate']],
             'h2h_away_win_rate': [h2h['h2h_away_win_rate']],
-            'h2h_draw_rate': [h2h['h2h_draw_rate']]
+            'h2h_draw_rate': [h2h['h2h_draw_rate']],
+            'goal_ratio': [goal_ratio],
+            'xG_ratio': [xG_ratio],
+            'day_of_week': [day_of_week],
+            'month': [month]
         })
         
         prediction_encoded = ensemble_model.predict(input_data)
@@ -163,7 +177,7 @@ def predict():
         home_goals_pred = home_goals_model.predict(input_data)[0]
         away_goals_pred = away_goals_model.predict(input_data)[0]
 
-        estimated_score = f"{home_goals_pred}-{away_goals_pred}"
+        estimated_score = f"{home_goals_pred:.2f}-{away_goals_pred:.2f}"
 
         h2h_history = get_h2h_history(home_team, away_team)
         home_team_last_matches = get_team_last_matches(home_team)

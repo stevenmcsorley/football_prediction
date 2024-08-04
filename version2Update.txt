@@ -1,0 +1,95 @@
+Model Training:
+
+All three models (RandomForest, XGBoost, and GradientBoosting) were successfully tuned.
+The previously tuned SVC model was loaded without issues.
+
+
+Feature Importance:
+
+For all three models, 'goal_ratio' and 'h2h_away_win_rate' are the most important features.
+This consistency across models suggests these features are indeed very predictive.
+
+
+Ensemble Model Performance:
+
+Accuracy: 0.9652 (96.52%) on the test set, which is excellent.
+
+
+Classification Report:
+
+Precision, recall, and F1-score are very high for all classes (away_win, draw, home_win).
+The model seems to perform slightly better on home_win predictions.
+
+
+Cross-validation Scores:
+
+Mean CV score: 0.9461 (94.61%)
+The cross-validation scores are consistent, indicating the model is stable across different subsets of the data.
+
+
+Score Prediction:
+
+Home Goals Prediction MAE: 0.0859
+Away Goals Prediction MAE: 0.1706
+These low Mean Absolute Error values suggest the score predictions are quite accurate.
+
+
+RAW text
+
+
+
+$ py train_enhance_v2.py
+\football_prediction\train_enhance_v2.py:54: DeprecationWarning: DataFrameGroupBy.apply operated on the grouping columns. This behavior is deprecated, and in a future version of pandas the grouping columns will be excluded from the operation. Either pass include_groups=False to exclude the groupings or explicitly select the grouping columns after groupby to silence this warning.
+  h2h_stats = df.groupby(['home_team', 'away_team']).apply(get_h2h_stats).reset_index()
+Loading previously tuned SVC model...
+Tuning RandomForest...
+Fitting 5 folds for each of 50 candidates, totalling 250 fits
+Best parameters for RandomForest: {'feature_selectionmax_features': 8, 'modelmax_depth': 21, 'modelmin_samples_leaf': 8, 'modelmin_samples_split': 8, 'modeln_estimators': 221}
+Best score for RandomForest: 0.9402617707575598
+Feature importance for RandomForest:
+Top 10 most important features:
+1. goal_ratio (0.861748)
+2. h2h_away_win_rate (0.138252)
+Tuning XGBoost...
+Fitting 5 folds for each of 50 candidates, totalling 250 fits
+Best parameters for XGBoost: {'feature_selectionmax_features': 6, 'modelcolsample_bytree': 0.6424202471887338, 'modellearning_rate': 0.021066084206359838, 'modelmax_depth': 3, 'modeln_estimators': 101, 'modelsubsample': 0.7513395116144308}
+Best score for XGBoost: 0.9408919103391069
+Feature importance for XGBoost:
+Top 10 most important features:
+1. goal_ratio (0.958617)
+2. h2h_away_win_rate (0.041383)
+Tuning GradientBoosting...
+Fitting 5 folds for each of 50 candidates, totalling 250 fits
+Best parameters for GradientBoosting: {'feature_selectionmax_features': 4, 'modellearning_rate': 0.26689728756342773, 'modelmax_depth': 8, 'modelmin_samples_leaf': 8, 'modelmin_samples_split': 2, 'modeln_estimators': 215, 'modelsubsample': 0.5420699824975244}
+Best score for GradientBoosting: 0.9411439979458057
+Feature importance for GradientBoosting:
+Top 10 most important features:
+1. goal_ratio (0.838607)
+2. h2h_away_win_rate (0.161393)
+Ensemble Model Results:
+Accuracy: 0.9652
+Ensemble Model Results:
+Accuracy: 0.9652
+Ensemble Model Results:
+Ensemble Model Results:
+Accuracy: 0.9652
+Classification Report:
+Ensemble Model Results:
+Accuracy: 0.9652
+Ensemble Model Results:
+Accuracy: 0.9652
+Ensemble Model Results:
+Accuracy: 0.9652
+Classification Report:
+              precision    recall  f1-score   support
+    away_win       0.90      1.00      0.95      1197
+        draw       1.00      0.87      0.93      1030
+    home_win       1.00      1.00      1.00      1741
+    accuracy                           0.97      3968
+   macro avg       0.97      0.96      0.96      3968
+weighted avg       0.97      0.97      0.96      3968
+Cross-validation scores: [0.94279234 0.94984879 0.94958407 0.94832367 0.94000504]
+Mean CV score: 0.9461 (+/- 0.0080)
+Home Goals Prediction MAE: 0.0859
+Away Goals Prediction MAE: 0.1706
+Ensemble model, label encoder, and score prediction models saved.
