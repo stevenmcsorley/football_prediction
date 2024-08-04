@@ -89,6 +89,10 @@
         <div id="result" class="mt-8 hidden">
           <h2 class="text-lg font-medium text-gray-900">Prediction Result:</h2>
           <p id="prediction" class="mt-2 text-sm text-gray-500"></p>
+          <p
+            id="predicted-score"
+            class="mt-2 text-lg font-bold text-indigo-600"
+          ></p>
           <div class="mt-4">
             <canvas id="probabilityChart"></canvas>
           </div>
@@ -300,6 +304,9 @@
             document.getElementById(
               "prediction"
             ).textContent = `Predicted outcome: ${result.prediction}`;
+            document.getElementById(
+              "predicted-score"
+            ).textContent = `Predicted score: ${result.predicted_score}`;
 
             const probabilities = result.probabilities;
             const labels = Object.keys(probabilities);

@@ -4,12 +4,14 @@ import pandas as pd
 import numpy as np
 from functools import lru_cache
 from datetime import datetime
+import random  # Add this import
 
 app = Flask(__name__)
 
 # Load the trained ensemble model and label encoder
 ensemble_model = joblib.load('football_prediction_ensemble.joblib')
 le = joblib.load('label_encoder.joblib')
+
 
 # Load team strength data and other necessary data
 df = pd.read_csv('football_match_data.csv')
@@ -102,6 +104,28 @@ def get_team_last_matches(team, n=5):
             })
     return history
 
+def estimate_score(prediction, probabilities):
+    if prediction == 'home_win':
+        home_score = random.randint(1, 3)
+        away_score = random.randint(0, home_score - 1)
+    elif prediction == 'away_win':
+        away_score = random.randint(1, 3)
+        home_score = random.randint(0, away_score - 1)
+    else:  # draw
+        home_score = away_score = random.randint(0, 2)
+    
+    # Adjust scores based on probabilities
+    if probabilities[prediction] > 0.7:  # High confidence
+        if prediction != 'draw':
+            winning_score = max(home_score, away_score)
+            winning_score += random.randint(0, 2)
+            if prediction == 'home_win':
+                home_score = winning_score
+            else:
+                away_score = winning_score
+    
+    return f"{home_score}-{away_score}"
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -165,6 +189,9 @@ def predict():
         probabilities = ensemble_model.predict_proba(input_data)[0]
         probability_dict = {le.classes_[i]: float(prob) * 100 for i, prob in enumerate(probabilities)}
 
+         # Estimate score
+        estimated_score = estimate_score(prediction, {k: v/100 for k, v in probability_dict.items()})
+
         # Get head-to-head history
         h2h_history = get_h2h_history(home_team, away_team)
         
@@ -175,6 +202,7 @@ def predict():
         return jsonify({
             'prediction': prediction,
             'probabilities': probability_dict,
+            'predicted_score': estimated_score,
             'h2h_history': h2h_history,
             'home_team_last_matches': home_team_last_matches,
             'away_team_last_matches': away_team_last_matches
