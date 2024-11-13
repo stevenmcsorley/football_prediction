@@ -76,8 +76,9 @@ def get_h2h_history(home_team, away_team, n=5):
     return history
 
 def get_team_last_matches(team, n=5):
-    home_matches = df[df['home_team'] == team].sort_values('date', ascending=False).head(n)
-    away_matches = df[df['away_team'] == team].sort_values('date', ascending=False).head(n)
+    current_date = datetime.now()
+    home_matches = df[(df['home_team'] == team) & (df['date'] < current_date)].sort_values('date', ascending=False).head(n)
+    away_matches = df[(df['away_team'] == team) & (df['date'] < current_date)].sort_values('date', ascending=False).head(n)
     
     all_matches = pd.concat([home_matches, away_matches]).sort_values('date', ascending=False).head(n)
     
